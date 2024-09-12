@@ -6,6 +6,7 @@
 
 #include <vector>
 #include <deque>
+#include <chrono>
 
 struct PlayMode : Mode {
 	PlayMode();
@@ -16,6 +17,7 @@ struct PlayMode : Mode {
 	virtual void update(float elapsed) override;
 	virtual void draw(glm::uvec2 const &drawable_size) override;
 	void make_mesh(enum block_type type);
+	void form_strip(uint8_t n);
 
 	//----- game state -----
 
@@ -23,7 +25,7 @@ struct PlayMode : Mode {
 	struct Button {
 		uint8_t downs = 0;
 		uint8_t pressed = 0;
-	} left, right, down, up, woodleft, woodright;
+	} left, right, down, up, woodleft, woodright, space;
 
 	//local copy of the game scene (so code can change it during gameplay):
 	Scene scene;
@@ -37,6 +39,9 @@ struct PlayMode : Mode {
 	glm::quat upper_leg_base_rotation;
 	glm::quat lower_leg_base_rotation;
 	float wobble = 0.0f;*/
+
+	std::chrono::steady_clock::time_point start_time;
+	bool timer_running = false;
 
 	Scene::Transform* woodTrans = nullptr;
 	

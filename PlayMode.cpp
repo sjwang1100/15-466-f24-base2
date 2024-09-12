@@ -11,6 +11,10 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include <random>
+#include <string>
+#include <sstream>   // For std::stringstream
+#include <iomanip>   // For std::setprecision and std::fixed
+
 
 enum block_type
 {
@@ -145,6 +149,36 @@ void PlayMode::make_mesh(enum block_type type) {
 	drawable.pipeline.count = mesh.count;
 }
 
+// keep track of how many strips are there
+uint16_t distance_unit = 0;
+// form "strip", where one strip contains 2 grassland and n waters
+void PlayMode::form_strip(uint8_t n) {
+	
+	make_mesh(grass);
+	Scene::Drawable& temp = scene.drawables.back();
+	temp.transform->rotation *= glm::angleAxis(
+		glm::radians(90.0f),
+		glm::vec3(0.0f, 0.0f, 1.0f));
+
+	glm::vec3 temp_pos = temp.transform->position;
+	for (int i = 0; i < n; i++) {
+		make_mesh(water);
+		temp = scene.drawables.back();
+		temp.transform->rotation *= glm::angleAxis(
+			glm::radians(0.0f),
+			glm::vec3(0.0f, 0.0f, 1.0f));
+		temp.transform->position = glm::vec3(temp_pos[0] + 5.0f, 0.0f, 0.0f);
+		temp_pos = temp.transform->position;
+	}
+
+	make_mesh(grass);
+	temp = scene.drawables.back();
+	temp.transform->rotation *= glm::angleAxis(
+		glm::radians(270.0f),
+		glm::vec3(0.0f, 0.0f, 1.0f));
+	temp.transform->position = glm::vec3(temp_pos[0] + 5.0f, 0.0f, 0.0f);
+}
+
 PlayMode::PlayMode() : /*scene(*hexapod_scene), */scene(*wood_scene) {
 	//get pointers to leg for convenience:
 	//for (auto &transform : scene.transforms) {
@@ -156,7 +190,7 @@ PlayMode::PlayMode() : /*scene(*hexapod_scene), */scene(*wood_scene) {
 	//if (upper_leg == nullptr) throw std::runtime_error("Upper leg not found.");
 	//if (lower_leg == nullptr) throw std::runtime_error("Lower leg not found.");
 
-	auto woodMesh = wood_meshes->lookup("Cube.001");
+	/*auto woodMesh = wood_meshes->lookup("Cube.001");
 	woodTrans = new Scene::Transform();
 	scene.drawables.emplace_back(woodTrans);
 	Scene::Drawable& drawable = scene.drawables.back();
@@ -166,41 +200,22 @@ PlayMode::PlayMode() : /*scene(*hexapod_scene), */scene(*wood_scene) {
 	drawable.pipeline.vao = wood_meshes_for_lit_color_texture_program;
 	drawable.pipeline.type = woodMesh.type;
 	drawable.pipeline.start = woodMesh.start;
-	drawable.pipeline.count = woodMesh.count;
+	drawable.pipeline.count = woodMesh.count;*/
 
-	/*auto woodMesh1 = wood_meshes->lookup("Cube.001");
-	auto woodTrans1 = new Scene::Transform();
-	scene.drawables.emplace_back(woodTrans1);
-	Scene::Drawable& drawable1 = scene.drawables.back();
-
-	drawable1.pipeline = lit_color_texture_program_pipeline;
-
-	drawable1.pipeline.vao = wood_meshes_for_lit_color_texture_program;
-	drawable1.pipeline.type = woodMesh1.type;
-	drawable1.pipeline.start = woodMesh1.start;
-	drawable1.pipeline.count = woodMesh1.count;*/
-
-	/*auto temp = new Scene::Transform();
-	scene.drawables.emplace_back(temp);
-	Scene::Drawable& d = scene.drawables.back();
-	auto waterMesh = water_meshes->lookup("Cube");
-	d.pipeline = lit_color_texture_program_pipeline;
-	d.pipeline.vao = water_meshes_for_lit_color_texture_program;
-	d.pipeline.type = waterMesh.type;
-	d.pipeline.start = waterMesh.start;
-	d.pipeline.count = waterMesh.count;*/
-
-	make_mesh(water); 
+	//make_mesh(water); /*
+	/*make_mesh(water);
+	make_mesh(water);
 	make_mesh(bomb);
-	make_mesh(man);
-	make_mesh(grass);
-	make_mesh(metal);
+	make_mesh(man);*/
+	form_strip(3);
+	//make_mesh(grass);
+	//make_mesh(metal);
 
-	float dis = 0;
-	for (auto &temp : scene.drawables) {
-		temp.transform->position = glm::vec3(5.0f, dis, 0.0f);
-		dis += 5;
-	}
+	//float dis = 0;/*
+	//for (auto &temp : scene.drawables) {
+	//	temp.transform->position = glm::vec3(5.0f, dis, 0.0f);
+	//	dis += 5;
+	//}*/
 
 	/*hip_base_rotation = hip->rotation;
 	upper_leg_base_rotation = upper_leg->rotation;
@@ -246,6 +261,11 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			woodright.downs++;
 			woodright.pressed = true;
 			return true;
+		case SDLK_SPACE:
+			space.downs++;
+			space.pressed = true;
+			timer_running = true;
+			start_time = std::chrono::steady_clock::now();
 		default:
 			break;
 		}
@@ -296,15 +316,15 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 	return false;
 }
 
-float temp = 5;
-int count = 0;
+/*float temp = 5;
+int count = 0;*/
 void PlayMode::update(float elapsed) {
-	count++;
+	/*count++;
 	if (count == 20) {
 		temp = temp * -1.0f;
 		woodTrans->position = glm::vec3(5.0f, 5.0f, temp);
 		count = 0;
-	}
+	}*/
 
 
 
@@ -352,6 +372,9 @@ void PlayMode::update(float elapsed) {
 	right.downs = 0;
 	up.downs = 0;
 	down.downs = 0;
+	woodleft.downs = 0;
+	woodright.downs = 0;
+	space.downs = 0;
 }
 
 void PlayMode::draw(glm::uvec2 const &drawable_size) {
@@ -395,10 +418,25 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 			glm::vec3(-aspect + 0.1f * H + ofs, /*-1.0 + 0.1f * H + ofs*/ 0.90, 0.0),
 			glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
 			glm::u8vec4(0xff, 0xff, 0xff, 0x00));
-		lines.draw_text("Time: XXXs",
-			glm::vec3(-aspect + 0.1f * H + ofs, /*-1.0 + 0.1f * H + ofs*/ 0.80, 0.0),
-			glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
-			glm::u8vec4(0xff, 0xff, 0xff, 0x00));
+		if (timer_running) {
+			// time processing code adapted from ChatGPT
+			auto curr_time = std::chrono::steady_clock::now();
+			std::chrono::duration<double> elapsed_seconds = curr_time - start_time;
+			std::stringstream ss;
+			ss << std::fixed << std::setprecision(3);  // Set the precision to 3 decimal places
+			ss << elapsed_seconds.count();
+			std::string message = ss.str();
+			lines.draw_text("Time: " + message + " s",
+				glm::vec3(-aspect + 0.1f * H + ofs, /*-1.0 + 0.1f * H + ofs*/ 0.80, 0.0),
+				glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
+				glm::u8vec4(0xff, 0xff, 0xff, 0x00));
+		}
+		else {
+			lines.draw_text("Time: XXX s",
+				glm::vec3(-aspect + 0.1f * H + ofs, /*-1.0 + 0.1f * H + ofs*/ 0.80, 0.0),
+				glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
+				glm::u8vec4(0xff, 0xff, 0xff, 0x00));
+		}
 		lines.draw_text("WASD move you; QE moves closest block/bomb",
 			glm::vec3(-aspect + 0.1f * H + ofs, /*-1.0 + 0.1f * H + ofs*/ 0.70, 0.0),
 			glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
