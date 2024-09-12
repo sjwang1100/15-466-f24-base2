@@ -1,4 +1,4 @@
-#include "PlayMode.hpp"
+﻿#include "PlayMode.hpp"
 
 #include "LitColorTextureProgram.hpp"
 
@@ -12,12 +12,16 @@
 
 #include <random>
 
-GLuint hexapod_meshes_for_lit_color_texture_program = 0;
-Load< MeshBuffer > hexapod_meshes(LoadTagDefault, []() -> MeshBuffer const * {
-	MeshBuffer const *ret = new MeshBuffer(data_path("hexapod.pnct"));
-	hexapod_meshes_for_lit_color_texture_program = ret->make_vao_for_program(lit_color_texture_program->program);
-	return ret;
-});
+enum block_type
+{
+	wood,
+	bomb,
+	grass,
+	man,
+	metal,
+	water
+};
+
 
 GLuint wood_meshes_for_lit_color_texture_program = 0;
 Load< MeshBuffer > wood_meshes(LoadTagDefault, []() -> MeshBuffer const* {
@@ -26,22 +30,41 @@ Load< MeshBuffer > wood_meshes(LoadTagDefault, []() -> MeshBuffer const* {
 	return ret1;
 });
 
-Load< Scene > hexapod_scene(LoadTagDefault, []() -> Scene const * {
-	return new Scene(data_path("hexapod.scene"), [&](Scene &scene, Scene::Transform *transform, std::string const &mesh_name){
-		Mesh const &mesh = hexapod_meshes->lookup(mesh_name);
-
-		scene.drawables.emplace_back(transform);
-		Scene::Drawable &drawable = scene.drawables.back();
-
-		drawable.pipeline = lit_color_texture_program_pipeline;
-
-		drawable.pipeline.vao = hexapod_meshes_for_lit_color_texture_program;
-		drawable.pipeline.type = mesh.type;
-		drawable.pipeline.start = mesh.start;
-		drawable.pipeline.count = mesh.count;
-
+GLuint bomb_meshes_for_lit_color_texture_program = 0;
+Load< MeshBuffer > bomb_meshes(LoadTagDefault, []() -> MeshBuffer const* {
+	MeshBuffer const* ret = new MeshBuffer(data_path("bomb.pnct"));
+	bomb_meshes_for_lit_color_texture_program = ret->make_vao_for_program(lit_color_texture_program->program);
+	return ret;
 	});
-});
+
+GLuint grass_meshes_for_lit_color_texture_program = 0;
+Load< MeshBuffer > grass_meshes(LoadTagDefault, []() -> MeshBuffer const* {
+	MeshBuffer const* ret = new MeshBuffer(data_path("grassland.pnct"));
+	grass_meshes_for_lit_color_texture_program = ret->make_vao_for_program(lit_color_texture_program->program);
+	return ret;
+	});
+
+GLuint man_meshes_for_lit_color_texture_program = 0;
+Load< MeshBuffer > man_meshes(LoadTagDefault, []() -> MeshBuffer const* {
+	MeshBuffer const* ret = new MeshBuffer(data_path("man.pnct"));
+	man_meshes_for_lit_color_texture_program = ret->make_vao_for_program(lit_color_texture_program->program);
+	return ret;
+	});
+
+GLuint metal_meshes_for_lit_color_texture_program = 0;
+Load< MeshBuffer > metal_meshes(LoadTagDefault, []() -> MeshBuffer const* {
+	MeshBuffer const* ret = new MeshBuffer(data_path("metal.pnct"));
+	metal_meshes_for_lit_color_texture_program = ret->make_vao_for_program(lit_color_texture_program->program);
+	return ret;
+	});
+
+GLuint water_meshes_for_lit_color_texture_program = 0;
+Load< MeshBuffer > water_meshes(LoadTagDefault, []() -> MeshBuffer const* {
+	MeshBuffer const* ret = new MeshBuffer(data_path("water.pnct"));
+	water_meshes_for_lit_color_texture_program = ret->make_vao_for_program(lit_color_texture_program->program);
+	return ret;
+	});
+
 
 Load< Scene > wood_scene(LoadTagDefault, []() -> Scene const* {
 	return new Scene(data_path("wood_test.scene"), [&](Scene& wood, Scene::Transform* transform, std::string const& mesh_name1) {
@@ -60,23 +83,83 @@ Load< Scene > wood_scene(LoadTagDefault, []() -> Scene const* {
 		});
 	});
 
-PlayMode::PlayMode() : scene(*hexapod_scene), wood(*wood_scene) {
-	//get pointers to leg for convenience:
-	for (auto &transform : scene.transforms) {
-		if (transform.name == "Hip.FL") hip = &transform;
-		else if (transform.name == "UpperLeg.FL") upper_leg = &transform;
-		else if (transform.name == "LowerLeg.FL") lower_leg = &transform;
-	}
-	if (hip == nullptr) throw std::runtime_error("Hip not found.");
-	if (upper_leg == nullptr) throw std::runtime_error("Upper leg not found.");
-	if (lower_leg == nullptr) throw std::runtime_error("Lower leg not found.");
+void PlayMode::make_mesh(enum block_type type) {
+	Mesh dummy;
+	Mesh& mesh = dummy;
 
-	//woodTrans = 
+	switch (type)
+	{
+	case wood:
+		mesh = wood_meshes->lookup("Cube.001");
+		break;
+	case bomb:
+		mesh = bomb_meshes->lookup("bomb"); 
+		break;
+	case grass:
+		mesh = grass_meshes->lookup("Cube");
+		break;
+	case man:
+		mesh = man_meshes->lookup("Cylinder.004");
+		break;
+	case metal:
+		mesh = metal_meshes->lookup("Cube.001");
+		break;
+	case water:
+		mesh = water_meshes->lookup("Cube");
+		break;
+	default:
+		return;
+	}
+
+	auto newTrans = new Scene::Transform();
+	scene.drawables.emplace_back(newTrans);
+	Scene::Drawable& drawable = scene.drawables.back();
+
+	drawable.pipeline = lit_color_texture_program_pipeline;
+
+	switch (type)
+	{
+	case wood:
+		drawable.pipeline.vao = wood_meshes_for_lit_color_texture_program;
+		break;
+	case bomb:
+		drawable.pipeline.vao = bomb_meshes_for_lit_color_texture_program;
+		break;
+	case grass:
+		drawable.pipeline.vao = grass_meshes_for_lit_color_texture_program;
+		break;
+	case man:
+		drawable.pipeline.vao = man_meshes_for_lit_color_texture_program;
+		break;
+	case metal:
+		drawable.pipeline.vao = metal_meshes_for_lit_color_texture_program;
+		break;
+	case water:
+		drawable.pipeline.vao = water_meshes_for_lit_color_texture_program;
+		break;
+	default:
+		return;
+	}
+	drawable.pipeline.type = mesh.type;
+	drawable.pipeline.start = mesh.start;
+	drawable.pipeline.count = mesh.count;
+}
+
+PlayMode::PlayMode() : /*scene(*hexapod_scene), */scene(*wood_scene) {
+	//get pointers to leg for convenience:
+	//for (auto &transform : scene.transforms) {
+	//	if (transform.name == "Hip.FL") hip = &transform;
+	//	else if (transform.name == "UpperLeg.FL") upper_leg = &transform;
+	//	else if (transform.name == "LowerLeg.FL") lower_leg = &transform;
+	//}
+	//if (hip == nullptr) throw std::runtime_error("Hip not found.");
+	//if (upper_leg == nullptr) throw std::runtime_error("Upper leg not found.");
+	//if (lower_leg == nullptr) throw std::runtime_error("Lower leg not found.");
 
 	auto woodMesh = wood_meshes->lookup("Cube.001");
 	woodTrans = new Scene::Transform();
-	wood.drawables.emplace_back(woodTrans);
-	Scene::Drawable& drawable = wood.drawables.back();
+	scene.drawables.emplace_back(woodTrans);
+	Scene::Drawable& drawable = scene.drawables.back();
 
 	drawable.pipeline = lit_color_texture_program_pipeline;
 
@@ -85,12 +168,43 @@ PlayMode::PlayMode() : scene(*hexapod_scene), wood(*wood_scene) {
 	drawable.pipeline.start = woodMesh.start;
 	drawable.pipeline.count = woodMesh.count;
 
-	hip_base_rotation = hip->rotation;
-	upper_leg_base_rotation = upper_leg->rotation;
-	lower_leg_base_rotation = lower_leg->rotation;
+	/*auto woodMesh1 = wood_meshes->lookup("Cube.001");
+	auto woodTrans1 = new Scene::Transform();
+	scene.drawables.emplace_back(woodTrans1);
+	Scene::Drawable& drawable1 = scene.drawables.back();
 
-	(wood.transforms.front()).position = glm::vec3(30.0f, 40.0f, 20.0f);
-	(wood.transforms.front()).scale = glm::vec3(20.0f, 20.0f, 20.0f);
+	drawable1.pipeline = lit_color_texture_program_pipeline;
+
+	drawable1.pipeline.vao = wood_meshes_for_lit_color_texture_program;
+	drawable1.pipeline.type = woodMesh1.type;
+	drawable1.pipeline.start = woodMesh1.start;
+	drawable1.pipeline.count = woodMesh1.count;*/
+
+	/*auto temp = new Scene::Transform();
+	scene.drawables.emplace_back(temp);
+	Scene::Drawable& d = scene.drawables.back();
+	auto waterMesh = water_meshes->lookup("Cube");
+	d.pipeline = lit_color_texture_program_pipeline;
+	d.pipeline.vao = water_meshes_for_lit_color_texture_program;
+	d.pipeline.type = waterMesh.type;
+	d.pipeline.start = waterMesh.start;
+	d.pipeline.count = waterMesh.count;*/
+
+	make_mesh(water); 
+	make_mesh(bomb);
+	make_mesh(man);
+	make_mesh(grass);
+	make_mesh(metal);
+
+	float dis = 0;
+	for (auto &temp : scene.drawables) {
+		temp.transform->position = glm::vec3(5.0f, dis, 0.0f);
+		dis += 5;
+	}
+
+	/*hip_base_rotation = hip->rotation;
+	upper_leg_base_rotation = upper_leg->rotation;
+	lower_leg_base_rotation = lower_leg->rotation;*/
 
 	//get pointer to camera for convenience:
 	if (scene.cameras.size() != 1) throw std::runtime_error("Expecting scene to have exactly one camera, but it has " + std::to_string(scene.cameras.size()));
@@ -103,39 +217,61 @@ PlayMode::~PlayMode() {
 bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size) {
 
 	if (evt.type == SDL_KEYDOWN) {
-		if (evt.key.keysym.sym == SDLK_ESCAPE) {
+		switch (evt.key.keysym.sym)
+		{
+		case SDLK_ESCAPE:
 			SDL_SetRelativeMouseMode(SDL_FALSE);
 			return true;
-		} else if (evt.key.keysym.sym == SDLK_a) {
-			left.downs += 1;
-			left.pressed = true;
-			return true;
-		} else if (evt.key.keysym.sym == SDLK_d) {
-			right.downs += 1;
-			right.pressed = true;
-			return true;
-		} else if (evt.key.keysym.sym == SDLK_w) {
+		case SDLK_w:
 			up.downs += 1;
 			up.pressed = true;
 			return true;
-		} else if (evt.key.keysym.sym == SDLK_s) {
+		case SDLK_a:
+			left.downs += 1;
+			left.pressed = true;
+			return true;
+		case SDLK_s:
 			down.downs += 1;
 			down.pressed = true;
 			return true;
+		case SDLK_d:
+			right.downs += 1;
+			right.pressed = true;
+			return true;
+		case SDLK_q:
+			woodleft.downs++;
+			woodleft.pressed = true;
+			return true;
+		case SDLK_e:
+			woodright.downs++;
+			woodright.pressed = true;
+			return true;
+		default:
+			break;
 		}
 	} else if (evt.type == SDL_KEYUP) {
-		if (evt.key.keysym.sym == SDLK_a) {
-			left.pressed = false;
-			return true;
-		} else if (evt.key.keysym.sym == SDLK_d) {
-			right.pressed = false;
-			return true;
-		} else if (evt.key.keysym.sym == SDLK_w) {
+		switch (evt.key.keysym.sym)
+		{
+		case SDLK_w:
 			up.pressed = false;
 			return true;
-		} else if (evt.key.keysym.sym == SDLK_s) {
+		case SDLK_a:
+			left.pressed = false;
+			return true;
+		case SDLK_s:
 			down.pressed = false;
 			return true;
+		case SDLK_d:
+			right.pressed = false;
+			return true;
+		case SDLK_q:
+			woodleft.pressed = false;
+			return true;
+		case SDLK_e:
+			woodright.pressed = false;
+			return true;
+		default:
+			break;
 		}
 	} else if (evt.type == SDL_MOUSEBUTTONDOWN) {
 		if (SDL_GetRelativeMouseMode() == SDL_FALSE) {
@@ -159,6 +295,7 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 
 	return false;
 }
+
 float temp = 5;
 int count = 0;
 void PlayMode::update(float elapsed) {
@@ -169,8 +306,10 @@ void PlayMode::update(float elapsed) {
 		count = 0;
 	}
 
+
+
 	//slowly rotates through [0,1):
-	wobble += elapsed / 10.0f;
+	/*wobble += elapsed / 10.0f;
 	wobble -= std::floor(wobble);
 
 	hip->rotation = hip_base_rotation * glm::angleAxis(
@@ -184,7 +323,7 @@ void PlayMode::update(float elapsed) {
 	lower_leg->rotation = lower_leg_base_rotation * glm::angleAxis(
 		glm::radians(10.0f * std::sin(wobble * 3.0f * 2.0f * float(M_PI))),
 		glm::vec3(0.0f, 0.0f, 1.0f)
-	);
+	);*/
 
 	//move camera:
 	{
@@ -237,7 +376,7 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 	GL_ERRORS(); //print any errors produced by this setup code
 
 	//scene.draw(*camera);
-	wood.draw(*camera);
+	scene.draw(*camera);
 
 	{ //use DrawLines to overlay some text:
 		glDisable(GL_DEPTH_TEST);
@@ -250,10 +389,7 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 		));
 
 		constexpr float H = 0.09f;
-		/*lines.draw_text("Mouse motion rotates camera; WASD moves; escape ungrabs mouse",
-			glm::vec3(-aspect + 0.1f * H, -1.0 + 0.1f * H, 0.0),
-			glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
-			glm::u8vec4(0x00, 0x00, 0x00, 0x00));*/
+
 		float ofs = 2.0f / drawable_size.y;
 		lines.draw_text("See how fast can you reach the end",
 			glm::vec3(-aspect + 0.1f * H + ofs, /*-1.0 + 0.1f * H + ofs*/ 0.90, 0.0),
@@ -277,3 +413,8 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 			glm::u8vec4(0xff, 0xff, 0xff, 0x00));
 	}
 }
+
+
+/* Temp place to store commands
+node Maekfile.js && cd dist && game.exe && cd ..
+*/

@@ -15,6 +15,7 @@ struct PlayMode : Mode {
 	virtual bool handle_event(SDL_Event const &, glm::uvec2 const &window_size) override;
 	virtual void update(float elapsed) override;
 	virtual void draw(glm::uvec2 const &drawable_size) override;
+	void make_mesh(enum block_type type);
 
 	//----- game state -----
 
@@ -22,20 +23,20 @@ struct PlayMode : Mode {
 	struct Button {
 		uint8_t downs = 0;
 		uint8_t pressed = 0;
-	} left, right, down, up;
+	} left, right, down, up, woodleft, woodright;
 
 	//local copy of the game scene (so code can change it during gameplay):
 	Scene scene;
-	Scene wood;
+	//Scene wood;
 
 	//hexapod leg to wobble:
-	Scene::Transform *hip = nullptr;
+	/*Scene::Transform *hip = nullptr;
 	Scene::Transform *upper_leg = nullptr;
 	Scene::Transform *lower_leg = nullptr;
 	glm::quat hip_base_rotation;
 	glm::quat upper_leg_base_rotation;
 	glm::quat lower_leg_base_rotation;
-	float wobble = 0.0f;
+	float wobble = 0.0f;*/
 
 	Scene::Transform* woodTrans = nullptr;
 	
