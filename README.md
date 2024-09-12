@@ -1,8 +1,8 @@
-# (TODO: your game's title)
+# Tetris River
 
-Author: (TODO: your name)
+Author: Shao-Ju Wang
 
-Design: (TODO: In two sentences or fewer, describe what is new and interesting about your game.)
+Design: Collect wood to build platform, build wisely to mitigate bomb impact
 
 Screen Shot:
 
@@ -10,6 +10,10 @@ Screen Shot:
 
 How To Play:
 
-(TODO: describe the controls and (if needed) goals/strategy.)
+See how fast can you reach the end
+Wood/metal build platform, bomb destroy it
+You lose if platform you stand on is destoyed
+WASD moves you; QE moves closest block/bomb
+
 
 This game was built with [NEST](NEST.md).
