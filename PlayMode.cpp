@@ -153,12 +153,19 @@ void PlayMode::make_mesh(enum block_type type) {
 uint16_t distance_unit = 0;
 // form "strip", where one strip contains 2 grassland and n waters
 void PlayMode::form_strip(uint8_t n) {
+
+	if (distance_unit == 0) {
+		end_distance.negX = 1.0f;
+		end_distance.negY = -3.255f;
+		end_distance.posX = 7.0f;
+	}
 	
 	make_mesh(grass);
 	Scene::Drawable& temp = scene.drawables.back();
 	temp.transform->rotation *= glm::angleAxis(
 		glm::radians(90.0f),
 		glm::vec3(0.0f, 0.0f, 1.0f));
+	temp.transform->position = glm::vec3(0.0, distance_unit * 5.5f, 0.0f);
 
 	glm::vec3 temp_pos = temp.transform->position;
 	for (int i = 0; i < n; i++) {
@@ -167,7 +174,7 @@ void PlayMode::form_strip(uint8_t n) {
 		temp.transform->rotation *= glm::angleAxis(
 			glm::radians(0.0f),
 			glm::vec3(0.0f, 0.0f, 1.0f));
-		temp.transform->position = glm::vec3(temp_pos[0] + 5.0f, 0.0f, 0.0f);
+		temp.transform->position = glm::vec3(temp_pos[0] + 2.0f, temp_pos[1], 0.0f);
 		temp_pos = temp.transform->position;
 	}
 
@@ -176,7 +183,17 @@ void PlayMode::form_strip(uint8_t n) {
 	temp.transform->rotation *= glm::angleAxis(
 		glm::radians(270.0f),
 		glm::vec3(0.0f, 0.0f, 1.0f));
-	temp.transform->position = glm::vec3(temp_pos[0] + 5.0f, 0.0f, 0.0f);
+	temp.transform->position = glm::vec3(temp_pos[0] + 4.0f, temp_pos[1], 0.0f);
+
+	make_mesh(grass);
+	temp = scene.drawables.back();
+	temp.transform->rotation *= glm::angleAxis(
+		glm::radians(90.0f),
+		glm::vec3(0.0f, 0.0f, 1.0f));
+	temp.transform->position = glm::vec3(temp_pos[0] - 8.0f, temp_pos[1], 0.0f);
+
+	distance_unit++;
+	end_distance.posY = temp_pos[1] + 2.0f;
 }
 
 PlayMode::PlayMode() : /*scene(*hexapod_scene), */scene(*wood_scene) {
@@ -190,32 +207,24 @@ PlayMode::PlayMode() : /*scene(*hexapod_scene), */scene(*wood_scene) {
 	//if (upper_leg == nullptr) throw std::runtime_error("Upper leg not found.");
 	//if (lower_leg == nullptr) throw std::runtime_error("Lower leg not found.");
 
-	/*auto woodMesh = wood_meshes->lookup("Cube.001");
-	woodTrans = new Scene::Transform();
-	scene.drawables.emplace_back(woodTrans);
-	Scene::Drawable& drawable = scene.drawables.back();
+	const uint8_t stream = 3;
 
-	drawable.pipeline = lit_color_texture_program_pipeline;
+	form_strip(stream);
+	form_strip(stream);
+	form_strip(stream);
+	form_strip(stream);
 
-	drawable.pipeline.vao = wood_meshes_for_lit_color_texture_program;
-	drawable.pipeline.type = woodMesh.type;
-	drawable.pipeline.start = woodMesh.start;
-	drawable.pipeline.count = woodMesh.count;*/
+	make_mesh(man);
+	manTrans = scene.drawables.back().transform;
+	manTrans->position = glm::vec3(4.0f, -3.25f, 1.0f);
+	manTrans->rotation *= glm::angleAxis(
+		glm::radians(180.0f),
+		glm::vec3(0.0f, 0.0f, 1.0f));
 
-	//make_mesh(water); /*
-	/*make_mesh(water);
-	make_mesh(water);
-	make_mesh(bomb);
-	make_mesh(man);*/
-	form_strip(3);
-	//make_mesh(grass);
-	//make_mesh(metal);
+	make_mesh(wood);
+	Scene::Transform* tempMesh = scene.drawables.back().transform;
+	tempMesh->position = glm::vec3(4.0f, -3.25f, 0.5f);
 
-	//float dis = 0;/*
-	//for (auto &temp : scene.drawables) {
-	//	temp.transform->position = glm::vec3(5.0f, dis, 0.0f);
-	//	dis += 5;
-	//}*/
 
 	/*hip_base_rotation = hip->rotation;
 	upper_leg_base_rotation = upper_leg->rotation;
@@ -224,6 +233,8 @@ PlayMode::PlayMode() : /*scene(*hexapod_scene), */scene(*wood_scene) {
 	//get pointer to camera for convenience:
 	if (scene.cameras.size() != 1) throw std::runtime_error("Expecting scene to have exactly one camera, but it has " + std::to_string(scene.cameras.size()));
 	camera = &scene.cameras.front();
+	camera->transform->rotation = glm::vec3(1.20102f, 0.002f, 0.0f);
+	camera->transform->position = glm::vec3(3.98946f, -11.086f, 5.4959f);
 }
 
 PlayMode::~PlayMode() {
@@ -304,11 +315,12 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 				evt.motion.xrel / float(window_size.y),
 				-evt.motion.yrel / float(window_size.y)
 			);
-			camera->transform->rotation = glm::normalize(
+			/*camera->transform->rotation = glm::normalize(
 				camera->transform->rotation
 				* glm::angleAxis(-motion.x * camera->fovy, glm::vec3(0.0f, 1.0f, 0.0f))
 				* glm::angleAxis(motion.y * camera->fovy, glm::vec3(1.0f, 0.0f, 0.0f))
-			);
+			);*/
+			//std::cout << camera->transform->position[0] << " " << camera->transform->position[1] << " " << camera->transform->position[2] << " " << std::endl;
 			return true;
 		}
 	}
@@ -316,17 +328,7 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 	return false;
 }
 
-/*float temp = 5;
-int count = 0;*/
 void PlayMode::update(float elapsed) {
-	/*count++;
-	if (count == 20) {
-		temp = temp * -1.0f;
-		woodTrans->position = glm::vec3(5.0f, 5.0f, temp);
-		count = 0;
-	}*/
-
-
 
 	//slowly rotates through [0,1):
 	/*wobble += elapsed / 10.0f;
@@ -364,7 +366,11 @@ void PlayMode::update(float elapsed) {
 		//glm::vec3 up = frame[1];
 		glm::vec3 frame_forward = -frame[2];
 
-		camera->transform->position += move.x * frame_right + move.y * frame_forward;
+		glm::vec3 manTemp = manTrans->position;
+		if ((end_distance.negX < manTemp[0] + move.x) && (manTemp[0] + move.x < end_distance.posX) &&
+			(end_distance.negY < manTemp[1] + move.y) && (manTemp[1] + move.y < end_distance.posY))
+			manTrans->position = glm::vec3(manTemp[0] + move.x, manTemp[1] + move.y, 1.0f);
+
 	}
 
 	//reset button press counters:
@@ -432,7 +438,7 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 				glm::u8vec4(0xff, 0xff, 0xff, 0x00));
 		}
 		else {
-			lines.draw_text("Time: XXX s",
+			lines.draw_text("Press SPACE to start timer",
 				glm::vec3(-aspect + 0.1f * H + ofs, /*-1.0 + 0.1f * H + ofs*/ 0.80, 0.0),
 				glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
 				glm::u8vec4(0xff, 0xff, 0xff, 0x00));

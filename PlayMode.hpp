@@ -43,6 +43,16 @@ struct PlayMode : Mode {
 	std::chrono::steady_clock::time_point start_time;
 	bool timer_running = false;
 
+
+	Scene::Transform* manTrans = nullptr;
+
+	struct end_dis {
+		float posX;
+		float posY;
+		float negX;
+		float negY;
+	} end_distance;
+
 	Scene::Transform* woodTrans = nullptr;
 	
 	//camera:

@@ -6,7 +6,7 @@ Design: Collect wood to build platform, build wisely to mitigate bomb impact
 
 Screen Shot:
 
-![Screen Shot](screenshot.png)
+![Screen Shot](screenshot.jpg)
 
 How To Play:
 
