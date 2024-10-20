@@ -29,16 +29,8 @@ struct PlayMode : Mode {
 
 	//local copy of the game scene (so code can change it during gameplay):
 	Scene scene;
-	//Scene wood;
 
-	//hexapod leg to wobble:
-	/*Scene::Transform *hip = nullptr;
-	Scene::Transform *upper_leg = nullptr;
-	Scene::Transform *lower_leg = nullptr;
-	glm::quat hip_base_rotation;
-	glm::quat upper_leg_base_rotation;
-	glm::quat lower_leg_base_rotation;
-	float wobble = 0.0f;*/
+	const uint8_t stream = 3;
 
 	std::chrono::steady_clock::time_point start_time;
 	bool timer_running = false;

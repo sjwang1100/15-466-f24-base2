@@ -29,7 +29,7 @@ enum block_type
 
 GLuint wood_meshes_for_lit_color_texture_program = 0;
 Load< MeshBuffer > wood_meshes(LoadTagDefault, []() -> MeshBuffer const* {
-	MeshBuffer const* ret1 = new MeshBuffer(data_path("wood_test.pnct"));
+	MeshBuffer const* ret1 = new MeshBuffer(data_path("wood.pnct"));
 	wood_meshes_for_lit_color_texture_program = ret1->make_vao_for_program(lit_color_texture_program->program);
 	return ret1;
 });
@@ -69,21 +69,8 @@ Load< MeshBuffer > water_meshes(LoadTagDefault, []() -> MeshBuffer const* {
 	return ret;
 	});
 
-
-Load< Scene > wood_scene(LoadTagDefault, []() -> Scene const* {
-	return new Scene(data_path("wood_test.scene"), [&](Scene& wood, Scene::Transform* transform, std::string const& mesh_name1) {
-		//Mesh const& mesh = wood_meshes->lookup(mesh_name1);
-
-		/*wood.drawables.emplace_back(transform);
-		Scene::Drawable& drawable = wood.drawables.back();*/
-		
-		//drawable.pipeline = lit_color_texture/*_program_pipeline;
-
-		//drawable.pipeline.vao = wood_meshes_for_lit_color_texture_program;
-		//drawable.pipeline.type = mesh.type;
-		//drawable.pipeline.start = mesh.start;
-		//drawable.pipeline.count = mesh.count;*/
-
+Load< Scene > empty_scene(LoadTagDefault, []() -> Scene const* {
+	return new Scene(data_path("empty.scene"), [&](Scene& scene, Scene::Transform* transform, std::string const& mesh_name) {
 		});
 	});
 
@@ -196,7 +183,7 @@ void PlayMode::form_strip(uint8_t n) {
 	end_distance.posY = temp_pos[1] + 2.0f;
 }
 
-PlayMode::PlayMode() : /*scene(*hexapod_scene), */scene(*wood_scene) {
+PlayMode::PlayMode() : scene(*empty_scene) {
 	//get pointers to leg for convenience:
 	//for (auto &transform : scene.transforms) {
 	//	if (transform.name == "Hip.FL") hip = &transform;
@@ -207,7 +194,7 @@ PlayMode::PlayMode() : /*scene(*hexapod_scene), */scene(*wood_scene) {
 	//if (upper_leg == nullptr) throw std::runtime_error("Upper leg not found.");
 	//if (lower_leg == nullptr) throw std::runtime_error("Lower leg not found.");
 
-	const uint8_t stream = 3;
+	
 
 	form_strip(stream);
 	form_strip(stream);
